@@ -18,28 +18,21 @@ services:
 
   backend:
     build: ./backend
-    restart: unless-stopped
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       PORT: 3000
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./backend/src:/app/src
+    expose:
+      - "3000"          # наружу не публикуем — доступ только изнутри
     depends_on:
       db:
         condition: service_healthy
 
   frontend:
-    build: ./frontend
-    restart: unless-stopped
-    environment:
-      VITE_API_URL: http://${VITE_API_URL}:3000
+    build:
+      context: ./frontend
+      # target: runner     # если хочешь явно указать stage
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/index.html:/app/index.html
+      - "80:80"          # теперь фронт на 80, а не 5173
     depends_on:
       - backend
 

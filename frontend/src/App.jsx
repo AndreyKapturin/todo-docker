@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API = '/api';
 
 export default function App() {
   const [todos, setTodos] = useState([]);
   const [title, setTitle] = useState("");
 
   async function load() {
-    const r = await fetch(`${API}/api/todos`);
+    const r = await fetch(`${API}/todos`);
     setTodos(await r.json());
   }
 
@@ -16,7 +16,7 @@ export default function App() {
   async function add(e) {
     e.preventDefault();
     if (!title.trim()) return;
-    await fetch(`${API}/api/todos`, {
+    await fetch(`${API}/todos`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title }),
@@ -26,12 +26,12 @@ export default function App() {
   }
 
   async function toggle(id) {
-    await fetch(`${API}/api/todos/${id}`, { method: "PATCH" });
+    await fetch(`${API}/todos/${id}`, { method: "PATCH" });
     load();
   }
 
   async function remove(id) {
-    await fetch(`${API}/api/todos/${id}`, { method: "DELETE" });
+    await fetch(`${API}/todos/${id}`, { method: "DELETE" });
     load();
   }
 
