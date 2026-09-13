@@ -130,20 +130,6 @@ app.get("/api/todos", authenticate, async (req, res) => {
   res.json(rows);
 });
 
-app.get("/api/messages/:userId", authenticate, async (req, res) => {
-  const userId = Number(req.params.userId);
-  if (!Number.isInteger(userId)) return res.status(400).json({ error: "Некорректный пользователь" });
-  const { rows } = await pool.query(
-    `SELECT messages.id, messages.sender_id, messages.recipient_id, users.username AS author,
-            messages.content, messages.created_at
-     FROM messages JOIN users ON users.id = messages.sender_id
-     WHERE (sender_id = $1 AND recipient_id = $2) OR (sender_id = $2 AND recipient_id = $1)
-     ORDER BY messages.created_at ASC, messages.id ASC`,
-    [req.user.id, userId]
-  );
-  res.json(rows);
-});
-
 app.get("/api/messages/stream", authenticate, (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -157,6 +143,20 @@ app.get("/api/messages/stream", authenticate, (req, res) => {
     clearInterval(heartbeat);
     messageClients.delete(client);
   });
+});
+
+app.get("/api/messages/:userId", authenticate, async (req, res) => {
+  const userId = Number(req.params.userId);
+  if (!Number.isInteger(userId)) return res.status(400).json({ error: "Некорректный пользователь" });
+  const { rows } = await pool.query(
+    `SELECT messages.id, messages.sender_id, messages.recipient_id, users.username AS author,
+            messages.content, messages.created_at
+     FROM messages JOIN users ON users.id = messages.sender_id
+     WHERE (sender_id = $1 AND recipient_id = $2) OR (sender_id = $2 AND recipient_id = $1)
+     ORDER BY messages.created_at ASC, messages.id ASC`,
+    [req.user.id, userId]
+  );
+  res.json(rows);
 });
 
 app.post("/api/messages", authenticate, async (req, res) => {

@@ -148,9 +148,9 @@ export default function App() {
     setTodos(await request("/todos", {}, token));
   }
 
+  const openTodos = useMemo(() => todos.filter((todo) => !todo.done).length, [todos]);
   if (!token || !user) return isLoading ? <div className="loading auth-loading">Загружаем...</div> : <AuthScreen onAuthenticated={(data) => { setToken(data.token); setUser(data.user); }} />;
 
-  const openTodos = useMemo(() => todos.filter((todo) => !todo.done).length, [todos]);
   const tabs = [
     { id: "people", label: "Люди", icon: "◉" },
     { id: "tasks", label: "Задачи", icon: "✓" },
