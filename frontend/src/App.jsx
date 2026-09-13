@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 const API = "/api";
@@ -73,6 +73,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const selectedPersonRef = useRef(null);
 
   useEffect(() => {
     if (!token) { setIsLoading(false); return; }
@@ -89,8 +90,12 @@ export default function App() {
 
   useEffect(() => {
     if (!token || !user || !selectedPerson) return;
-    setMessages([]);
-    request(`/messages/${selectedPerson.id}`, {}, token).then(setMessages).catch((requestError) => setError(requestError.message));
+    selectedPersonRef.current = selectedPerson;
+    request(`/messages/${selectedPerson.id}`, {}, token).then((history) => {
+      setMessages((current) => [...current, ...history]
+        .filter((message, index, all) => all.findIndex((item) => item.id === message.id) === index)
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)));
+    }).catch((requestError) => setError(requestError.message));
   }, [token, user, selectedPerson]);
 
   useEffect(() => {
@@ -98,13 +103,14 @@ export default function App() {
     const stream = new EventSource(`${API}/messages/stream?token=${encodeURIComponent(token)}`);
     const onMessage = (event) => {
       const message = JSON.parse(event.data);
-      if (!selectedPerson || (message.sender_id !== selectedPerson.id && message.recipient_id !== selectedPerson.id)) return;
+      const currentPerson = selectedPersonRef.current;
+      if (!currentPerson || (message.sender_id !== currentPerson.id && message.recipient_id !== currentPerson.id)) return;
       setMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message]);
     };
     stream.addEventListener("message", onMessage);
     stream.onerror = () => setError("Соединение с сообщениями прервано. Повторяем подключение...");
     return () => { stream.removeEventListener("message", onMessage); stream.close(); };
-  }, [token, user, selectedPerson]);
+  }, [token, user]);
 
   useEffect(() => {
     if (!token || !user) return;
