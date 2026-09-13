@@ -76,11 +76,11 @@ input:focus { border-color: #7580f4; box-shadow: 0 0 0 3px #eef0ff; }
 .person { align-items: center; background: transparent; border: 0; border-radius: 10px; color: #172033; display: flex; gap: 10px; padding: 9px; text-align: left; }
 .person:hover, .person-active { background: #eef0ff; color: #4e59e2; }
 .small-avatar { flex: 0 0 32px; font-size: 13px; height: 32px; width: 32px; }
-.chat-panel { display: flex; flex-direction: column; min-height: 560px; padding: 22px 26px; }
+.chat-panel { display: flex; flex-direction: column; height: min(560px, calc(100vh - 150px)); min-height: 0; overflow: hidden; padding: 22px 26px; }
 .chat-heading { align-items: center; border-bottom: 1px solid #edf0f5; display: flex; gap: 11px; padding-bottom: 18px; }
 .chat-heading h2 { font-size: 17px; }
 .chat-heading p { color: #929bad; font-size: 12px; margin: 3px 0 0; }
-.chat-panel .message-list { flex: 1; max-height: none; }
+.chat-panel .message-list { flex: 1; max-height: none; min-height: 0; overflow-y: auto; }
 .chat-placeholder { align-items: center; color: #929bad; display: flex; flex: 1; flex-direction: column; justify-content: center; text-align: center; }
 .chat-placeholder > span { color: #5965f2; font-size: 34px; }
 .chat-placeholder h2 { color: #172033; font-size: 18px; margin-top: 16px; }
@@ -88,4 +88,4 @@ input:focus { border-color: #7580f4; box-shadow: 0 0 0 3px #eef0ff; }
 .message-own { background: #f8f8ff; border-radius: 10px; margin-left: 20px; padding-left: 10px; }
 .secondary-button { background: #fff; border: 1px solid #dfe2eb; border-radius: 9px; color: #5965f2; font-weight: 600; margin-top: 24px; padding: 10px 16px; }
 @media (max-width: 680px) { .app-shell { display: block; } .sidebar { border-bottom: 1px solid #e8ebf2; border-right: 0; padding: 18px; width: 100%; } .brand { padding: 0 4px 18px; } .tabs { display: flex; overflow-x: auto; } .tab { white-space: nowrap; } .sidebar-footer { display: none; } .content { padding: 28px 16px; } .panel { padding: 20px 16px; } .message-composer { flex-wrap: wrap; } .message-composer input:first-child { flex: 1 1 100%; } .message-composer input:nth-child(2) { min-width: 0; } }
-@media (max-width: 800px) { .chat-layout { grid-template-columns: 1fr; } .people-panel { max-height: 290px; } .people-list { max-height: 145px; overflow-y: auto; } .chat-panel { min-height: 500px; } }
+@media (max-width: 800px) { .chat-layout { grid-template-columns: 1fr; } .people-panel { max-height: 290px; } .people-list { max-height: 145px; overflow-y: auto; } .chat-panel { height: min(500px, calc(100vh - 330px)); } }
