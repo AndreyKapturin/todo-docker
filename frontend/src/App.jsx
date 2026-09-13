@@ -73,8 +73,17 @@ export default function App() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState(
+    () => ("Notification" in window ? Notification.permission : "unsupported")
+  );
   const selectedPersonRef = useRef(null);
+  const activeTabRef = useRef(activeTab);
   const messageListRef = useRef(null);
+
+  useEffect(() => {
+    selectedPersonRef.current = selectedPerson;
+    activeTabRef.current = activeTab;
+  }, [selectedPerson, activeTab]);
 
   useEffect(() => {
     const list = messageListRef.current;
@@ -93,13 +102,17 @@ export default function App() {
   }, [token]);
 
   useEffect(() => {
+    if (!token || !user || !("Notification" in window) || Notification.permission !== "default") return;
+    Notification.requestPermission().then(setNotificationPermission).catch(() => {});
+  }, [token, user]);
+
+  useEffect(() => {
     if (!token || !user) return;
     request(`/users?search=${encodeURIComponent(search)}`, {}, token).then(setPeople).catch((requestError) => setError(requestError.message));
   }, [token, user, search]);
 
   useEffect(() => {
     if (!token || !user || !selectedPerson) return;
-    selectedPersonRef.current = selectedPerson;
     request(`/messages/${selectedPerson.id}`, {}, token).then((history) => {
       setMessages((current) => [...current, ...history]
         .filter((message, index, all) => all.findIndex((item) => item.id === message.id) === index)
@@ -113,6 +126,11 @@ export default function App() {
     const onMessage = (event) => {
       const message = JSON.parse(event.data);
       const currentPerson = selectedPersonRef.current;
+      const isIncoming = message.recipient_id === user.id && message.sender_id !== user.id;
+      const isActiveChat = activeTabRef.current === "people" && currentPerson?.id === message.sender_id;
+      if (isIncoming && !isActiveChat && "Notification" in window && Notification.permission === "granted") {
+        new Notification(message.author, { body: message.content, tag: `chat-${message.sender_id}` });
+      }
       if (!currentPerson || (message.sender_id !== currentPerson.id && message.recipient_id !== currentPerson.id)) return;
       setMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message]);
     };
@@ -143,6 +161,11 @@ export default function App() {
     localStorage.removeItem("todo-token");
     setToken(null);
     setUser(null);
+  }
+
+  async function enableNotifications() {
+    if (!("Notification" in window)) return;
+    setNotificationPermission(await Notification.requestPermission());
   }
 
   async function add(event) {
@@ -201,7 +224,7 @@ export default function App() {
           </section>
         )}
         {activeTab === "tasks" && <section className="panel"><div className="section-heading"><div><h2>Мой план</h2><p>{openTodos} активных задач</p></div></div><form onSubmit={add} className="composer"><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Добавить новую задачу..." aria-label="Название задачи" /><button className="primary-button">Добавить</button></form><div className="task-list">{todos.length === 0 ? <div className="empty">Пока нет задач. Добавьте первую выше.</div> : todos.map((todo) => <div className={`task ${todo.done ? "task-done" : ""}`} key={todo.id}><input type="checkbox" checked={todo.done} onChange={() => toggle(todo.id)} aria-label={`Отметить: ${todo.title}`} /><span>{todo.title}</span><button className="icon-button" onClick={() => remove(todo.id)} aria-label={`Удалить: ${todo.title}`}>×</button></div>)}</div></section>}
-        {activeTab === "settings" && <section className="panel settings-panel"><h2>Настройки</h2><p>Ваш логин: <strong>{user.username}</strong></p><button className="secondary-button" onClick={logout}>Выйти из аккаунта</button></section>}
+        {activeTab === "settings" && <section className="panel settings-panel"><h2>Настройки</h2><p>Ваш логин: <strong>{user.username}</strong></p>{notificationPermission === "granted" ? <p className="notification-status">Уведомления включены для новых сообщений в неактивных чатах.</p> : notificationPermission === "unsupported" ? <p className="notification-status">Этот браузер не поддерживает уведомления.</p> : notificationPermission === "denied" ? <p className="notification-status">Уведомления заблокированы в настройках браузера.</p> : <button className="secondary-button" onClick={enableNotifications}>Включить уведомления</button>}<button className="secondary-button" onClick={logout}>Выйти из аккаунта</button></section>}
       </main>
     </div>
   );
