@@ -74,6 +74,15 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const selectedPersonRef = useRef(null);
+  const messageListRef = useRef(null);
+
+  useEffect(() => {
+    const list = messageListRef.current;
+    if (!list) return;
+    requestAnimationFrame(() => {
+      list.scrollTop = list.scrollHeight;
+    });
+  }, [messages, selectedPerson]);
 
   useEffect(() => {
     if (!token) { setIsLoading(false); return; }
@@ -185,7 +194,7 @@ export default function App() {
             <section className="panel chat-panel">
               {!selectedPerson ? <div className="chat-placeholder"><span>◌</span><h2>Выберите собеседника</h2><p>Ваши сообщения видите только вы и получатель.</p></div> : <>
                 <div className="chat-heading"><div className="avatar small-avatar">{selectedPerson.username[0].toUpperCase()}</div><div><h2>{selectedPerson.username}</h2><p>Личный чат</p></div></div>
-                <div className="message-list">{messages.length === 0 ? <div className="empty">Начните разговор первым.</div> : messages.map((message) => <article className={`message ${message.sender_id === user.id ? "message-own" : ""}`} key={message.id}><div className="message-avatar">{message.author[0].toUpperCase()}</div><div><div className="message-meta"><strong>{message.author}</strong><time>{new Date(message.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></div><p>{message.content}</p></div></article>)}</div>
+                <div className="message-list" ref={messageListRef}>{messages.length === 0 ? <div className="empty">Начните разговор первым.</div> : messages.map((message) => <article className={`message ${message.sender_id === user.id ? "message-own" : ""}`} key={message.id}><div className="message-avatar">{message.author[0].toUpperCase()}</div><div><div className="message-meta"><strong>{message.author}</strong><time>{new Date(message.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></div><p>{message.content}</p></div></article>)}</div>
                 <form onSubmit={sendMessage} className="message-composer"><input value={content} onChange={(event) => setContent(event.target.value)} placeholder={`Написать ${selectedPerson.username}...`} aria-label="Сообщение" /><button className="primary-button" disabled={isSending}>{isSending ? "..." : "Отправить"}</button></form>
               </>}
             </section>
