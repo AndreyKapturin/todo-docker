@@ -113,11 +113,17 @@ export default function App() {
 
   useEffect(() => {
     if (!token || !user || !selectedPerson) return;
+    let isCurrentChat = true;
+    setMessages([]);
     request(`/messages/${selectedPerson.id}`, {}, token).then((history) => {
-      setMessages((current) => [...current, ...history]
-        .filter((message, index, all) => all.findIndex((item) => item.id === message.id) === index)
-        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)));
-    }).catch((requestError) => setError(requestError.message));
+      if (!isCurrentChat || selectedPersonRef.current?.id !== selectedPerson.id) return;
+      setMessages(history);
+    }).catch((requestError) => {
+      if (isCurrentChat) setError(requestError.message);
+    });
+    return () => {
+      isCurrentChat = false;
+    };
   }, [token, user, selectedPerson]);
 
   useEffect(() => {
@@ -212,7 +218,7 @@ export default function App() {
             <div className="panel people-panel">
               <div className="section-heading"><div><h2>Люди</h2><p>Найдите человека и начните личный чат</p></div></div>
               <input className="search-input" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Поиск по логину..." aria-label="Поиск людей" />
-              <div className="people-list">{people.length === 0 ? <div className="empty">Никого не нашли</div> : people.map((person) => <button className={`person ${selectedPerson?.id === person.id ? "person-active" : ""}`} key={person.id} onClick={() => setSelectedPerson(person)}><span className="avatar small-avatar">{person.username[0].toUpperCase()}</span><strong>{person.username}</strong></button>)}</div>
+              <div className="people-list">{people.length === 0 ? <div className="empty">Никого не нашли</div> : people.map((person) => <button className={`person ${selectedPerson?.id === person.id ? "person-active" : ""}`} key={person.id} onClick={() => { setMessages([]); setSelectedPerson(person); }}><span className="avatar small-avatar">{person.username[0].toUpperCase()}</span><strong>{person.username}</strong></button>)}</div>
             </div>
             <section className="panel chat-panel">
               {!selectedPerson ? <div className="chat-placeholder"><span>◌</span><h2>Выберите собеседника</h2><p>Ваши сообщения видите только вы и получатель.</p></div> : <>
